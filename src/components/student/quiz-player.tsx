@@ -13,6 +13,7 @@ import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
 import { addDoc, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter, FirestorePermissionError } from '@/lib/errors';
 
 interface QuizPlayerProps {
   quiz: Quiz;
@@ -77,15 +78,28 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
     };
 
     try {
-        await addDoc(collection(db, "submissions"), submission);
+        const submissionsCol = collection(db, "submissions")
+        await addDoc(submissionsCol, submission).catch(e => {
+            if (e.code === 'permission-denied') {
+                const customError = new FirestorePermissionError({
+                    operation: 'create',
+                    path: submissionsCol.path,
+                    requestResourceData: submission
+                });
+                errorEmitter.emit('permission-error', customError);
+            }
+            throw e;
+        });
         setIsFinished(true);
     } catch (error) {
         console.error("Error submitting quiz:", error);
-        toast({
-            variant: "destructive",
-            title: "Submission Failed",
-            description: "There was an error submitting your quiz. Please try again.",
-        });
+         if (error instanceof FirestorePermissionError === false) {
+            toast({
+                variant: "destructive",
+                title: "Submission Failed",
+                description: "There was an error submitting your quiz. Please try again.",
+            });
+        }
     } finally {
         setIsSubmitting(false);
     }

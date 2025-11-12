@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { QuizCard } from "@/components/student/quiz-card";
-import { Progress } from "@/components/ui/progress";
-import { BarChart3, TrendingUp } from "lucide-react";
 import { QuizRecommendation } from "@/components/student/quiz-recommendation";
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -14,10 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function StudentDashboardPage() {
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // This data would come from student's actual performance records
-    const averageScore = 78;
-    const quizzesCompleted = 5;
 
     useEffect(() => {
         const fetchQuizzes = async () => {
@@ -44,33 +38,6 @@ export default function StudentDashboardPage() {
       <div>
         <h1 className="text-3xl font-bold font-headline">Student Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's your progress and available quizzes.</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                    <BarChart3 className="text-primary"/>
-                    Your Average Score
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-4xl font-bold">{Math.round(averageScore)}%</p>
-                <Progress value={averageScore} className="mt-2" />
-            </CardContent>
-        </Card>
-         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                    <TrendingUp className="text-primary"/>
-                    Quizzes Completed
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-4xl font-bold">{quizzesCompleted}</p>
-                 <p className="text-sm text-muted-foreground">Keep up the great work!</p>
-            </CardContent>
-        </Card>
       </div>
       
       <div className="grid gap-8 lg:grid-cols-3">

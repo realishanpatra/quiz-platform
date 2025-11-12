@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { errorEmitter, FirestorePermissionError } from '@/lib/errors';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -63,13 +64,24 @@ export function QuizForm() {
         const quizData = {
             ...data,
             createdBy: user.uid,
-            createdAt: new Date(),
+            createdAt: new Date().toISOString(),
             questions: data.questions.map(q => ({
                 ...q,
                 correctAnswer: parseInt(q.correctAnswer, 10)
             }))
         };
-        await addDoc(collection(db, "quizzes"), quizData);
+        const quizzesCol = collection(db, "quizzes");
+        await addDoc(quizzesCol, quizData).catch(e => {
+            if (e.code === 'permission-denied') {
+                const customError = new FirestorePermissionError({
+                    operation: 'create',
+                    path: quizzesCol.path,
+                    requestResourceData: quizData
+                });
+                errorEmitter.emit('permission-error', customError);
+            }
+            throw e;
+        });
         
         toast({
           title: 'Quiz Created!',
@@ -79,11 +91,13 @@ export function QuizForm() {
         router.push('/teacher/quizzes');
     } catch (error) {
         console.error("Error creating quiz:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to create the quiz. Please try again.',
-        });
+         if (error instanceof FirestorePermissionError === false) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to create the quiz. Please try again.',
+            });
+        }
     } finally {
         setIsSubmitting(false);
     }
@@ -136,11 +150,11 @@ export function QuizForm() {
               
               <Separator />
               
-              <FormLabel>Options</FormLabel>
-               <FormField control={form.control} name={`questions.${index}.correctAnswer`} render={({ field }) => (
+              <FormField control={form.control} name={`questions.${index}.correctAnswer`} render={({ field }) => (
                  <FormItem>
+                    <FormLabel>Options (select the correct one)</FormLabel>
                     <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value}>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-2">
                             <QuestionOptions control={form.control} questionIndex={index} />
                         </RadioGroup>
                     </FormControl>
