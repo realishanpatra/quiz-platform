@@ -36,7 +36,10 @@ export function FirebaseErrorListener() {
   
   const getRulePath = (path: string) => {
       const parts = path.split('/');
-      return `/${parts[0]}/{${parts[0].slice(0, -1)}Id}`;
+      if (parts.length > 1) {
+        return `/${parts[0]}/{${parts[0].slice(0, -1)}Id}`;
+      }
+      return path;
   }
 
   if (!error) {
@@ -60,7 +63,7 @@ export function FirebaseErrorListener() {
                 <h3 className="font-semibold mb-1">Operation Details</h3>
                 <div className="flex items-center gap-2">
                     <Badge variant="destructive">{error.operation.toUpperCase()}</Badge>
-                    <code className="text-muted-foreground">{getRulePath(error.ref.path)}</code>
+                    <code className="text-muted-foreground">{getRulePath(error.path)}</code>
                 </div>
             </div>
             <div>

@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         } catch(e: any) {
             if (e.code === 'permission-denied') {
-                const customError = new FirestorePermissionError('get', userDocRef);
+                const customError = new FirestorePermissionError({operation: 'get', path: userDocRef.path });
                 errorEmitter.emit('permission-error', customError);
             }
              setUser(null);
@@ -112,11 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Use setDoc to explicitly use the user's UID as the document ID
       await setDoc(userDocRef, newUser).catch(e => {
         if (e.code === 'permission-denied') {
-          const customError = new FirestorePermissionError(
-            'create',
-            userDocRef,
-            newUser
-          );
+          const customError = new FirestorePermissionError({
+            operation: 'create',
+            path: userDocRef.path,
+            requestResourceData: newUser
+          });
           errorEmitter.emit('permission-error', customError);
         }
         // Re-throw the original error to be caught by the outer try/catch

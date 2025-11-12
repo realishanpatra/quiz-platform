@@ -1,4 +1,8 @@
-import { DocumentReference } from 'firebase/firestore';
+export type SecurityRuleContext = {
+  path: string;
+  operation: 'get' | 'list' | 'create' | 'update' | 'delete';
+  requestResourceData?: any;
+};
 
 // 1. Define a simple event emitter
 class EventEmitter {
@@ -23,20 +27,16 @@ export const errorEmitter = new EventEmitter();
 // 2. Define the custom error class
 export class FirestorePermissionError extends Error {
   operation: 'get' | 'list' | 'create' | 'update' | 'delete';
-  ref: DocumentReference;
+  path: string;
   resource?: any;
 
-  constructor(
-    operation: 'get' | 'list' | 'create' | 'update' | 'delete',
-    ref: DocumentReference,
-    resource?: any
-  ) {
-    const message = `Firestore Permission Denied: Cannot ${operation} document at path ${ref.path}.`;
+  constructor(context: SecurityRuleContext) {
+    const message = `Firestore Permission Denied: Cannot ${context.operation} document at path ${context.path}.`;
     super(message);
     this.name = 'FirestorePermissionError';
-    this.operation = operation;
-    this.ref = ref;
-    this.resource = resource;
+    this.operation = context.operation;
+    this.path = context.path;
+    this.resource = context.requestResourceData;
     
     // This is for environments like Node.js
     if (typeof (Error as any).captureStackTrace === 'function') {
