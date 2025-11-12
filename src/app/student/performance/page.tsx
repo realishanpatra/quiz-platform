@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/context/auth-context';
 import type { Performance } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,8 +25,7 @@ export default function StudentPerformancePage() {
       try {
         const q = query(
           collection(db, "submissions"), 
-          where("studentId", "==", user.uid),
-          orderBy("date", "desc")
+          where("studentId", "==", user.uid)
         );
         const querySnapshot = await getDocs(q);
         const fetchedPerformance: Performance[] = [];
@@ -39,6 +38,10 @@ export default function StudentPerformancePage() {
             date: data.date,
           });
         });
+        
+        // Sort the data by date on the client side
+        fetchedPerformance.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
         setPerformance(fetchedPerformance);
       } catch (error) {
         console.error("Error fetching performance data:", error);

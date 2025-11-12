@@ -42,16 +42,18 @@ export default function TeacherDashboardPage() {
           const quizIds = fetchedQuizzes.map(q => q.id);
           const subQuery = query(
             collection(db, "submissions"), 
-            where("quizId", "in", quizIds),
-            orderBy("date", "desc"),
-            limit(10)
+            where("quizId", "in", quizIds)
           );
           const subSnapshot = await getDocs(subQuery);
           const fetchedSubmissions: Submission[] = [];
           subSnapshot.forEach(doc => fetchedSubmissions.push(doc.data() as Submission));
-          setSubmissions(fetchedSubmissions);
+          
+          // Sort client-side and get the 10 most recent
+          fetchedSubmissions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          const recentSubmissions = fetchedSubmissions.slice(0, 10);
+          setSubmissions(recentSubmissions);
 
-          // Calculate class performance
+          // Calculate class performance based on all submissions for this teacher's quizzes
           if (fetchedSubmissions.length > 0) {
             let totalScore = 0;
             let topStudent = { name: 'N/A', score: 0 };
