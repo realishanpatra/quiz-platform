@@ -1,0 +1,32 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can create their own user document upon signup.
+    // They can only read their own document afterwards.
+    // No one can update or delete user documents for now.
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
+      allow update, delete: if false; 
+    }
+
+    // Quizzes can be read by any authenticated user.
+    // Quizzes can only be created, updated, or deleted by a user
+    // whose 'role' in the 'users' collection is 'teacher'.
+    match /quizzes/{quizId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    // Submissions can be created by any authenticated user for themselves.
+    // Users can only read their own submissions.
+    match /submissions/{submissionId} {
+      allow read: if request.auth.uid == resource.data.studentId;
+      allow create: if request.auth.uid == request.resource.data.studentId;
+      allow update, delete: if false;
+    }
+  }
+}
