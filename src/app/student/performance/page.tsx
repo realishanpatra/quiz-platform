@@ -93,12 +93,12 @@ export default function StudentPerformancePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {performance.length > 0 ? performance.map((p) => (
-                <TableRow key={p.quizId + p.date}>
+              {performance.length > 0 ? performance.map((p, index) => (
+                <TableRow key={p.quizId + p.date + index}>
                   <TableCell className="font-medium">{p.quizTitle}</TableCell>
                   <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={p.score >= 70 ? 'default' : 'destructive'} className={p.score >= 70 ? 'bg-green-600' : ''}>
+                    <Badge variant={p.score >= 70 ? 'default' : 'destructive'}>
                       {p.score}%
                     </Badge>
                   </TableCell>

@@ -20,13 +20,13 @@ export function ScoreDistributionChart({ performanceData }: ScoreDistributionCha
   const chartData = useMemo(() => {
     if (performanceData.length === 0) {
       return [
-        { label: 'Your Score', score: 0, fill: "hsl(var(--chart-1))" },
-        { label: 'Class Average', score: 0, fill: "hsl(var(--chart-2))" },
+        { label: 'Latest Score', score: 0, fill: "hsl(var(--chart-1))" },
+        { label: 'Your Average', score: 0, fill: "hsl(var(--chart-2))" },
       ];
     }
+    // performanceData is sorted desc by date, so the first item is the latest.
     const latestScore = performanceData[0].score;
-    // Note: In a real app, class average would be fetched, not calculated from personal data.
-    // This is a placeholder calculation.
+    
     const averageScore = Math.round(performanceData.reduce((acc, p) => acc + p.score, 0) / performanceData.length);
     
     return [
@@ -39,7 +39,7 @@ export function ScoreDistributionChart({ performanceData }: ScoreDistributionCha
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">Score Comparison</CardTitle>
-        <CardDescription>Your latest quiz score vs. your average score</CardDescription>
+        <CardDescription>Your latest quiz score vs. your average score.</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-64">

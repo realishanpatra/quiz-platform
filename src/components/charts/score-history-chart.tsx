@@ -4,6 +4,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } fro
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { Performance } from '@/lib/types';
+import { useMemo } from 'react';
 
 const chartConfig = {
   score: {
@@ -13,6 +14,12 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function ScoreHistoryChart({ performanceData }: { performanceData: Performance[] }) {
+  
+  const chartData = useMemo(() => {
+    // The data is fetched sorted descending, but the chart should show time ascending (left to right)
+    return [...performanceData].reverse();
+  }, [performanceData]);
+
   return (
     <Card>
       <CardHeader>
@@ -20,11 +27,11 @@ export function ScoreHistoryChart({ performanceData }: { performanceData: Perfor
         <CardDescription>Your scores from the last few quizzes.</CardDescription>
       </CardHeader>
       <CardContent>
-        {performanceData.length > 0 ? (
+        {chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="h-64">
             <AreaChart
               accessibilityLayer
-              data={performanceData}
+              data={chartData}
               margin={{
                 left: 12,
                 right: 12,
@@ -38,7 +45,7 @@ export function ScoreHistoryChart({ performanceData }: { performanceData: Perfor
                 tickMargin={8}
                 tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               />
-              <YAxis domain={[0, 100]} />
+              <YAxis domain={[0, 100]} unit="%" />
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent indicator="dot" />}
