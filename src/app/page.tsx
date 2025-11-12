@@ -8,12 +8,12 @@ export default function Home() {
   
   return (
     <main className="flex min-h-screen w-full flex-col lg:flex-row">
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4 md:p-8 lg:p-12 bg-background order-2 lg:order-1">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 p-4 md:p-8 lg:p-12 order-2 lg:order-1">
         <div className="max-w-md w-full text-center">
             <div className="inline-block mb-4">
               <Logo />
             </div>
-            <h1 className="text-4xl font-headline font-bold text-primary">Welcome to QuizVerse</h1>
+            <h1 className="text-4xl font-headline font-bold">Welcome to QuizVerse</h1>
             <p className="text-muted-foreground mt-2">
               Sign in or create an account to start your learning journey.
             </p>
@@ -25,14 +25,13 @@ export default function Home() {
           <Image
             src={loginImage.imageUrl}
             alt={loginImage.description}
-            width={1200}
-            height={1800}
-            className="object-cover w-full h-full"
+            fill
+            className="object-cover"
             data-ai-hint={loginImage.imageHint}
             priority
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-primary/10 lg:bg-gradient-to-r" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent lg:bg-gradient-to-r" />
       </div>
     </main>
   );

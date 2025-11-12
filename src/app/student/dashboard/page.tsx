@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { QuizCard } from "@/components/student/quiz-card";
 import { mockQuizzes, mockPerformance } from "@/lib/mock-data";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { QuizRecommendation } from "@/components/student/quiz-recommendation";
 
@@ -12,7 +11,7 @@ export default function StudentDashboardPage() {
         : 0;
 
   return (
-    <div className="space-y-8">
+    <>
       <div>
         <h1 className="text-3xl font-bold font-headline">Student Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's your progress and available quizzes.</p>
@@ -21,7 +20,7 @@ export default function StudentDashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
+                <CardTitle className="font-headline flex items-center gap-2 text-lg">
                     <BarChart3 className="text-primary"/>
                     Your Average Score
                 </CardTitle>
@@ -33,7 +32,7 @@ export default function StudentDashboardPage() {
         </Card>
          <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
+                <CardTitle className="font-headline flex items-center gap-2 text-lg">
                     <TrendingUp className="text-primary"/>
                     Quizzes Completed
                 </CardTitle>
@@ -60,6 +59,6 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-    </div>
+    </>
   );
 }

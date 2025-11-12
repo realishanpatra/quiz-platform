@@ -2,8 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { LayoutDashboard, ClipboardList, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/teacher/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -15,23 +15,21 @@ export function TeacherNav() {
   const pathname = usePathname();
 
   return (
-    <SidebarMenu>
+    <ul className="space-y-1 px-4">
       {navItems.map((item) => (
-        <SidebarMenuItem key={item.label}>
-          <Link href={item.href} legacyBehavior passHref>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === item.href}
-              tooltip={{ children: item.label }}
-            >
-              <a>
-                <item.icon />
-                <span>{item.label}</span>
-              </a>
-            </SidebarMenuButton>
+        <li key={item.label}>
+          <Link
+            href={item.href}
+             className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+              { "bg-muted text-primary": pathname === item.href }
+            )}
+          >
+            <item.icon className="h-4 w-4" />
+            <span>{item.label}</span>
           </Link>
-        </SidebarMenuItem>
+        </li>
       ))}
-    </SidebarMenu>
+    </ul>
   );
 }

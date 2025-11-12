@@ -14,7 +14,7 @@ export default function TeacherDashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <>
       <div>
         <h1 className="text-3xl font-bold font-headline">Teacher Dashboard</h1>
         <p className="text-muted-foreground">An overview of your class's activity and performance.</p>
@@ -103,6 +103,6 @@ export default function TeacherDashboardPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }
