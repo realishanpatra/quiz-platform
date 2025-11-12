@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/context/auth-context';
+import { FirebaseErrorListener } from '@/components/firebase/firebase-error-listener';
 
 export const metadata: Metadata = {
   title: 'QuizVerse',
@@ -25,6 +26,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
+          <FirebaseErrorListener />
         </AuthProvider>
       </body>
     </html>

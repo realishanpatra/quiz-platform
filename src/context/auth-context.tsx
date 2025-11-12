@@ -13,6 +13,7 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { FirestorePermissionError, errorEmitter } from '@/lib/errors';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -95,8 +96,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: email,
           role,
       };
+      
+      const userDocRef = doc(db, "users", firebaseUser.uid);
 
-      await setDoc(doc(db, "users", firebaseUser.uid), newUser);
+      try {
+        await setDoc(userDocRef, newUser);
+      } catch(e: any) {
+        if (e.code === 'permission-denied') {
+          const customError = new FirestorePermissionError(
+            'create',
+            userDocRef,
+            newUser
+          );
+          errorEmitter.emit('permission-error', customError);
+        }
+        throw e; // re-throw original error
+      }
       
       // The onAuthStateChanged listener will handle setting the user
       router.push(`/${role}/dashboard`);
@@ -106,12 +121,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     } catch (error: any) {
-      console.error("Signup error:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Sign Up Failed',
-        description: error.message || 'Could not create your account. Please try again.',
-      });
+      // Don't show a toast for permission errors as the dialog will handle it
+      if (error.code !== 'permission-denied') {
+         toast({
+          variant: 'destructive',
+          title: 'Sign Up Failed',
+          description: error.message || 'Could not create your account. Please try again.',
+        });
+      }
     } finally {
       setLoading(false);
     }
