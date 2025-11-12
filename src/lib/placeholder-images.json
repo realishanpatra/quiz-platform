@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "login-hero",
+      "description": "An abstract, colorful representation of interconnected ideas and learning, with geometric shapes and soft gradients.",
+      "imageUrl": "https://images.unsplash.com/photo-1761319115499-872737b89e44?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxsZWFybmluZyUyMGtub3dsZWRnZXxlbnwwfHx8fDE3NjI5NTYwMTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "learning knowledge"
+    }
+  ]
 }
