@@ -33,14 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (userDoc.exists()) {
           const appUser = userDoc.data() as AppUser;
           setUser(appUser);
-          if (pathname === '/') {
-            router.replace(`/${appUser.role}/dashboard`);
-          }
         } else {
            // Handle case where user exists in Auth but not in Firestore
            setUser(null);
@@ -53,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
@@ -62,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
       if (userDoc.exists()) {
         const appUser = userDoc.data() as AppUser;
-        setUser(appUser);
+        // The onAuthStateChanged listener will handle setting the user
         router.push(`/${appUser.role}/dashboard`);
         toast({
           title: 'Login Successful',
@@ -100,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await setDoc(doc(db, "users", firebaseUser.uid), newUser);
       
-      setUser(newUser);
+      // The onAuthStateChanged listener will handle setting the user
       router.push(`/${role}/dashboard`);
       toast({
           title: 'Account Created!',
@@ -122,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
+      // The onAuthStateChanged listener will handle setting the user to null
       router.push('/');
       toast({
           title: 'Logged Out',
@@ -137,9 +135,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const value = { user, loading, login, logout, signup };
-
   const isPublicRoute = ['/'].includes(pathname);
+  
+  useEffect(() => {
+    if (loading) return;
+
+    if (user && pathname === '/') {
+       router.replace(`/${user.role}/dashboard`);
+    }
+
+    if (!user && !isPublicRoute) {
+      router.replace('/');
+    }
+  }, [user, loading, isPublicRoute, pathname, router]);
+
+
+  const value = { user, loading, login, logout, signup };
+  
+  // Show a loading state while we determine auth status, unless on the public homepage
   if (loading && !isPublicRoute) {
     return (
         <div className="flex h-screen items-center justify-center">
@@ -148,15 +161,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user && !isPublicRoute && !loading) {
-    router.replace('/');
+  // Prevent rendering of protected routes for unauthenticated users
+  if (!user && !isPublicRoute) {
     return (
-        <div className="flex h-screen items-center justify-center">
+         <div className="flex h-screen items-center justify-center">
             <p>Redirecting to login...</p>
         </div>
     );
   }
-
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
