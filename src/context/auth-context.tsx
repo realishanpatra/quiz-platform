@@ -18,9 +18,9 @@ import { FirestorePermissionError, errorEmitter } from '@/lib/errors';
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
-  login: (email: string, password: string) => void;
-  logout: () => void;
-  signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => void;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,14 +36,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (userDoc.exists()) {
-          const appUser = userDoc.data() as AppUser;
-          setUser(appUser);
-        } else {
-           // Handle case where user exists in Auth but not in Firestore
-           setUser(null);
-           await signOut(auth);
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        try {
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              const appUser = userDoc.data() as AppUser;
+              setUser(appUser);
+            } else {
+               // Handle case where user exists in Auth but not in Firestore
+               setUser(null);
+               await signOut(auth);
+            }
+        } catch(e: any) {
+            if (e.code === 'permission-denied') {
+                const customError = new FirestorePermissionError('get', userDocRef);
+                errorEmitter.emit('permission-error', customError);
+            }
+             setUser(null);
+             await signOut(auth);
         }
       } else {
         setUser(null);
@@ -99,9 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const userDocRef = doc(db, "users", firebaseUser.uid);
 
-      try {
-        await setDoc(userDocRef, newUser);
-      } catch(e: any) {
+      // Use setDoc to explicitly use the user's UID as the document ID
+      await setDoc(userDocRef, newUser).catch(e => {
         if (e.code === 'permission-denied') {
           const customError = new FirestorePermissionError(
             'create',
@@ -110,8 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
           errorEmitter.emit('permission-error', customError);
         }
-        throw e; // re-throw original error
-      }
+        // Re-throw the original error to be caught by the outer try/catch
+        throw e;
+      });
       
       // The onAuthStateChanged listener will handle setting the user
       router.push(`/${role}/dashboard`);
@@ -121,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     } catch (error: any) {
+      console.error("Signup error:", error);
       // Don't show a toast for permission errors as the dialog will handle it
       if (error.code !== 'permission-denied') {
          toast({
