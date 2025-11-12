@@ -4,6 +4,7 @@ import { quizRecommendation } from '@/ai/flows/quiz-recommendation';
 import type { QuizRecommendationInput } from '@/ai/flows/quiz-recommendation';
 
 export async function getQuizRecommendation(input: QuizRecommendationInput) {
+  // In a real app, you'd want to check user authentication here
   try {
     const result = await quizRecommendation(input);
     return result;

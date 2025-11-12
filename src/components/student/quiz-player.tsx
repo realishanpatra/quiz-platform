@@ -2,24 +2,30 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Quiz } from '@/lib/types';
+import type { Quiz, Submission } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, XCircle, ArrowLeft, ArrowRight, Flag } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Flag, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
+import { db } from '@/lib/firebase';
+import { addDoc, collection } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface QuizPlayerProps {
   quiz: Quiz;
 }
 
 export function QuizPlayer({ quiz }: QuizPlayerProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(new Array(quiz.questions.length).fill(null));
   const [isFinished, setIsFinished] = useState(false);
   const [score, setScore] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const handleAnswerSelect = (answerIndex: number) => {
@@ -40,15 +46,49 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Not Authenticated",
+            description: "You must be logged in to submit a quiz.",
+        });
+        return;
+    }
+
+    setIsSubmitting(true);
     let correctCount = 0;
     quiz.questions.forEach((question, index) => {
       if (selectedAnswers[index] === question.correctAnswer) {
         correctCount++;
       }
     });
-    setScore(Math.round((correctCount / quiz.questions.length) * 100));
-    setIsFinished(true);
+    const finalScore = Math.round((correctCount / quiz.questions.length) * 100);
+    setScore(finalScore);
+
+    const submission: Submission = {
+        studentId: user.uid,
+        studentName: user.name,
+        quizId: quiz.id,
+        quizTitle: quiz.title,
+        score: finalScore,
+        date: new Date().toISOString(),
+        answers: selectedAnswers,
+    };
+
+    try {
+        await addDoc(collection(db, "submissions"), submission);
+        setIsFinished(true);
+    } catch (error) {
+        console.error("Error submitting quiz:", error);
+        toast({
+            variant: "destructive",
+            title: "Submission Failed",
+            description: "There was an error submitting your quiz. Please try again.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
@@ -89,7 +129,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
           {currentQuestion.options.map((option, index) => (
             <Label key={index} className="flex items-center space-x-3 p-4 border rounded-md has-[:checked]:bg-accent has-[:checked]:border-accent-foreground/50 transition-colors cursor-pointer">
               <RadioGroupItem value={index.toString()} id={`q${currentQuestionIndex}-o${index}`} />
-              <span>{option}</span>
+              <span>{option.value}</span>
             </Label>
           ))}
         </RadioGroup>
@@ -105,8 +145,12 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-            <Flag className="mr-2 h-4 w-4" />
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+            {isSubmitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Flag className="mr-2 h-4 w-4" />
+            )}
             Finish Quiz
           </Button>
         )}

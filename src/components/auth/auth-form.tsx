@@ -16,7 +16,6 @@ import { Loader2 } from 'lucide-react';
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
-  role: z.enum(['student', 'teacher'], { required_error: 'You must select a role.' }),
 });
 
 const signupSchema = z.object({
@@ -27,12 +26,11 @@ const signupSchema = z.object({
 });
 
 export default function AuthForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, signup } = useAuth();
+  const { login, signup, loading } = useAuth();
   
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', role: 'student' },
+    defaultValues: { email: '', password: '' },
   });
 
   const signupForm = useForm<z.infer<typeof signupSchema>>({
@@ -41,19 +39,13 @@ export default function AuthForm() {
   });
 
   const onLogin = async (values: z.infer<typeof loginSchema>) => {
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    login(values.role, values.email);
-    setIsSubmitting(false);
+    // This now calls the real Firebase login function from the auth context
+    await login(values.email, values.password);
   };
 
   const onSignup = async (values: z.infer<typeof signupSchema>) => {
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    signup(values.name, values.email, values.role);
-    setIsSubmitting(false);
+    // This now calls the real Firebase signup function from the auth context
+    await signup(values.name, values.email, values.password, values.role);
   };
 
   return (
@@ -89,30 +81,8 @@ export default function AuthForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={loginForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>I am a...</FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl><RadioGroupItem value="student" /></FormControl>
-                            <FormLabel className="font-normal">Student</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl><RadioGroupItem value="teacher" /></FormControl>
-                            <FormLabel className="font-normal">Teacher</FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Log In
                 </Button>
               </form>
@@ -176,8 +146,8 @@ export default function AuthForm() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" className="w-full" disabled={loading}>
+                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Account
                 </Button>
               </form>

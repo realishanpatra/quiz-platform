@@ -14,6 +14,9 @@ import { Separator } from '../ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const questionSchema = z.object({
   text: z.string().min(1, 'Question text is required.'),
@@ -32,6 +35,7 @@ type QuizFormValues = z.infer<typeof quizSchema>;
 export function QuizForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<QuizFormValues>({
@@ -49,17 +53,40 @@ export function QuizForm() {
   });
 
   const onSubmit = async (data: QuizFormValues) => {
+    if (!user) {
+        toast({ variant: "destructive", title: "Not authenticated", description: "You must be logged in to create a quiz." });
+        return;
+    }
     setIsSubmitting(true);
-    console.log(data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({
-      title: 'Quiz Created!',
-      description: `The quiz "${data.title}" has been successfully created.`,
-      action: <div className="p-2 rounded-full bg-green-500"><Check className="h-4 w-4 text-white"/></div>
-    });
-    router.push('/teacher/quizzes');
-    setIsSubmitting(false);
+    
+    try {
+        const quizData = {
+            ...data,
+            createdBy: user.uid,
+            createdAt: new Date(),
+            questions: data.questions.map(q => ({
+                ...q,
+                correctAnswer: parseInt(q.correctAnswer, 10)
+            }))
+        };
+        await addDoc(collection(db, "quizzes"), quizData);
+        
+        toast({
+          title: 'Quiz Created!',
+          description: `The quiz "${data.title}" has been successfully created.`,
+          action: <div className="p-2 rounded-full bg-green-500"><Check className="h-4 w-4 text-white"/></div>
+        });
+        router.push('/teacher/quizzes');
+    } catch (error) {
+        console.error("Error creating quiz:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to create the quiz. Please try again.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (

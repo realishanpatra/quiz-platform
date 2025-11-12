@@ -1,27 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getQuizRecommendation } from '@/lib/actions';
-import { mockStudentPerformanceSummary, mockAvailableQuizzesForAI } from '@/lib/mock-data';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Wand2, Lightbulb, Loader2 } from 'lucide-react';
 import type { QuizRecommendationOutput } from '@/ai/flows/quiz-recommendation';
+import type { Quiz, Performance } from '@/lib/types';
 import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-export function QuizRecommendation() {
+function generatePerformanceSummary(performance: Performance[]): string {
+    if (performance.length === 0) {
+        return "The student has not completed any quizzes yet. Recommend some introductory quizzes to get them started.";
+    }
+
+    let summary = "The student's recent performance is as follows:\n";
+    performance.forEach(p => {
+        summary += `- Quiz "${p.quizTitle}" with a score of ${p.score}%. `;
+        if (p.score >= 80) {
+            summary += "(Strong performance)\n";
+        } else if (p.score >= 60) {
+            summary += "(Good performance)\n";
+        } else {
+            summary += "(Area for improvement)\n";
+        }
+    });
+
+    const lowScores = performance.filter(p => p.score < 60);
+    if (lowScores.length > 0) {
+        summary += "\nThe student seems to be struggling with: " + lowScores.map(p => p.quizTitle).join(', ') + ". Please recommend quizzes that can help reinforce these topics.";
+    } else {
+        summary += "\nThe student is performing well. Recommend more advanced or related topics to challenge them.";
+    }
+
+    return summary;
+}
+
+export function QuizRecommendation({ availableQuizzes }: { availableQuizzes: Quiz[] }) {
+  const { user } = useAuth();
   const [recommendation, setRecommendation] = useState<QuizRecommendationOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [performance, setPerformance] = useState<Performance[]>([]);
+  
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchPerformance = async () => {
+      const q = query(
+        collection(db, "submissions"), 
+        where("studentId", "==", user.uid),
+        orderBy("date", "desc"),
+        limit(5)
+      );
+      const querySnapshot = await getDocs(q);
+      const fetchedPerformance: Performance[] = [];
+      querySnapshot.forEach((doc) => {
+        fetchedPerformance.push(doc.data() as Performance);
+      });
+      setPerformance(fetchedPerformance);
+    };
+
+    fetchPerformance();
+  }, [user]);
 
   const handleGetRecommendation = async () => {
     setIsLoading(true);
     setError(null);
     setRecommendation(null);
+    
+    const performanceSummary = generatePerformanceSummary(performance);
+    const availableQuizzesForAI = JSON.stringify(availableQuizzes.map(q => ({id: q.id, title: q.title, topic: q.description})));
+
     const result = await getQuizRecommendation({
-      studentPerformanceSummary: mockStudentPerformanceSummary,
-      availableQuizzes: mockAvailableQuizzesForAI,
+      studentPerformanceSummary: performanceSummary,
+      availableQuizzes: availableQuizzesForAI,
     });
     setIsLoading(false);
     if ('error' in result) {
@@ -30,6 +87,10 @@ export function QuizRecommendation() {
       setRecommendation(result);
     }
   };
+  
+    const recommendedQuiz = recommendation?.recommendedQuizzes
+    ? availableQuizzes.find(q => recommendation.recommendedQuizzes.includes(q.title))
+    : null;
 
   return (
     <Card>
@@ -65,12 +126,15 @@ export function QuizRecommendation() {
                         <p>{recommendation.reasoning}</p>
                     </div>
                      <div>
-                        <h4 className="font-semibold mb-1">Recommended Quizzes:</h4>
+                        <h4 className="font-semibold mb-1">Recommended Quiz:</h4>
                         <p>{recommendation.recommendedQuizzes}</p>
-                        {/* This part would need more sophisticated parsing in a real app */}
-                        <div className="flex gap-2 mt-2">
-                            <Button size="sm" asChild><Link href="/student/quiz/quiz-1">Try Algebra Basics</Link></Button>
-                        </div>
+                        {recommendedQuiz && (
+                            <div className="flex gap-2 mt-2">
+                                <Button size="sm" asChild>
+                                    <Link href={`/student/quiz/${recommendedQuiz.id}`}>Try {recommendedQuiz.title}</Link>
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </AlertDescription>
             </Alert>
@@ -78,7 +142,7 @@ export function QuizRecommendation() {
         {!isLoading && !recommendation && (
             <div className="text-center p-4 border-2 border-dashed rounded-lg">
                 <p className="text-muted-foreground mb-4">Click the button to get your personalized quiz plan.</p>
-                <Button onClick={handleGetRecommendation} disabled={isLoading}>
+                <Button onClick={handleGetRecommendation} disabled={isLoading || availableQuizzes.length === 0}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
                     Generate My Plan
                 </Button>

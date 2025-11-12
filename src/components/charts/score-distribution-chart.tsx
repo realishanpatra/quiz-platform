@@ -3,11 +3,8 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-
-const chartData = [
-  { label: 'Your Score', score: 95, fill: "hsl(var(--chart-1))" },
-  { label: 'Class Average', score: 82, fill: "hsl(var(--chart-2))" },
-];
+import type { Performance } from '@/lib/types';
+import { useMemo } from 'react';
 
 const chartConfig = {
   score: {
@@ -15,19 +12,41 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ScoreDistributionChart() {
+interface ScoreDistributionChartProps {
+    performanceData: Performance[];
+}
+
+export function ScoreDistributionChart({ performanceData }: ScoreDistributionChartProps) {
+  const chartData = useMemo(() => {
+    if (performanceData.length === 0) {
+      return [
+        { label: 'Your Score', score: 0, fill: "hsl(var(--chart-1))" },
+        { label: 'Class Average', score: 0, fill: "hsl(var(--chart-2))" },
+      ];
+    }
+    const latestScore = performanceData[0].score;
+    // Note: In a real app, class average would be fetched, not calculated from personal data.
+    // This is a placeholder calculation.
+    const averageScore = Math.round(performanceData.reduce((acc, p) => acc + p.score, 0) / performanceData.length);
+    
+    return [
+      { label: 'Latest Score', score: latestScore, fill: "hsl(var(--chart-1))" },
+      { label: 'Your Average', score: averageScore, fill: "hsl(var(--chart-2))" },
+    ];
+  }, [performanceData]);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-headline">Score Comparison</CardTitle>
-        <CardDescription>Your latest quiz score vs. the class average</CardDescription>
+        <CardDescription>Your latest quiz score vs. your average score</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-64">
           <BarChart accessibilityLayer data={chartData} margin={{ top: 20 }}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" tickLine={false} tickMargin={10} axisLine={false} />
-            <YAxis domain={[0, 100]} />
+            <YAxis domain={[0, 100]} unit="%" />
             <Tooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dot" />}
