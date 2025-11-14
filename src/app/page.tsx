@@ -13,7 +13,7 @@ export default function Home() {
             <div className="inline-block mb-4">
               <Logo />
             </div>
-            <h1 className="text-4xl font-headline font-bold">Welcome to QuizVerse</h1>
+            <h1 className="text-4xl font-headline font-bold">Welcome to PICTIAP</h1>
             <p className="text-muted-foreground mt-2">
               Sign in or create an account to start your learning journey.
             </p>

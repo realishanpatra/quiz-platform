@@ -38,7 +38,7 @@ export function DashboardLayout({
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
                   <Logo />
-                  <span className="sr-only">QuizVerse</span>
+                  <span className="sr-only">PICTIAP</span>
                 </Link>
                 {navItems}
               </nav>

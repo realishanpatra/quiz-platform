@@ -16,8 +16,18 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+// Validate required config early to provide a clearer error when env vars are missing
+if (!firebaseConfig.apiKey) {
+  throw new Error(
+    'Missing Firebase API key (NEXT_PUBLIC_FIREBASE_API_KEY).\n' +
+      'Create a `.env.local` at the project root with your Firebase config.\n' +
+      'See FIREBASE_SETUP.md for steps and an example of the required variables.'
+  );
+}
+
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 export { app, auth, db };
+

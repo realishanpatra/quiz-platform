@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push(`/${role}/dashboard`);
       toast({
           title: 'Account Created!',
-          description: `Welcome to QuizVerse, ${name}!`,
+          description: `Welcome to PICTIAP, ${name}!`,
       });
 
     } catch (error: any) {

@@ -1,4 +1,4 @@
-# **App Name**: QuizVerse
+# **App Name**: PICTIAP
 
 ## Core Features:
 

@@ -1,6 +1,6 @@
-# QuizVerse
+# PICTIAP
 
-QuizVerse is a modern learning platform built with Next.js and Firebase. It provides a seamless experience for both students and teachers.
+PICTIAP is a modern learning platform built with Next.js and Firebase. It provides a seamless experience for both students and teachers.
 
 ## Features
 

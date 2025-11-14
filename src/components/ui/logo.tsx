@@ -7,7 +7,7 @@ export function Logo({ className }: { className?: string }) {
             <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-primary")}>
                 <BookOpenCheck className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-headline text-xl font-bold">QuizVerse</span>
+            <span className="font-headline text-xl font-bold">PICTIAP</span>
         </div>
     );
 }

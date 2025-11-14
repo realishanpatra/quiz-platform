@@ -72,6 +72,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
         studentName: user.name,
         quizId: quiz.id,
         quizTitle: quiz.title,
+        teacherId: quiz.createdBy,
         score: finalScore,
         date: new Date().toISOString(),
         answers: selectedAnswers,
@@ -117,7 +118,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
         </CardHeader>
         <CardContent className="text-center">
           <p className="text-lg text-muted-foreground">Your Score:</p>
-          <p className={`text-6xl font-bold ${score >= 70 ? 'text-green-600' : 'text-destructive'}`}>{score}%</p>
+          <p className={`text-6xl font-bold ${score >= 70 ? 'text-primary' : 'text-destructive'}`}>{score}%</p>
         </CardContent>
         <CardFooter className="flex justify-center">
           <Button onClick={() => router.push('/student/dashboard')}>Back to Dashboard</Button>
@@ -159,7 +160,7 @@ export function QuizPlayer({ quiz }: QuizPlayerProps) {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

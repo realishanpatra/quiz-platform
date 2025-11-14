@@ -27,14 +27,19 @@ service cloud.firestore {
     }
 
     match /submissions/{submissionId} {
-        // A user can create a submission if they are the one submitting it.
-        allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
+        // A user can create a submission if they are the one submitting it,
+        // and the teacherId in the submission matches the creator of the quiz.
+        allow create: if request.auth != null && 
+                        request.resource.data.studentId == request.auth.uid &&
+                        request.resource.data.teacherId == get(/databases/$(database)/documents/quizzes/$(request.resource.data.quizId)).data.createdBy;
 
         // A user can read their own submissions.
         allow read: if request.auth != null && resource.data.studentId == request.auth.uid;
         
         // Teachers can read submissions for quizzes they created.
-        allow list: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' && get(/databases/$(database)/documents/quizzes/$(request.query.quizId)).data.createdBy == request.auth.uid;
+        allow list: if request.auth != null && 
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' &&
+                       request.query.teacherId == request.auth.uid;
     }
   }
 }

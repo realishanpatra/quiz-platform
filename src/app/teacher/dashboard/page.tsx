@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle, Target, UserCheck, UserX } from "lucide-react";
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
@@ -37,44 +36,48 @@ export default function TeacherDashboardPage() {
         quizSnapshot.forEach(doc => fetchedQuizzes.push({ id: doc.id, ...doc.data() } as Quiz));
         setQuizzes(fetchedQuizzes);
         
-        // Fetch recent submissions for those quizzes
-        if (fetchedQuizzes.length > 0) {
-          const quizIds = fetchedQuizzes.map(q => q.id);
-          const subQuery = query(
-            collection(db, "submissions"), 
-            where("quizId", "in", quizIds)
-          );
-          const subSnapshot = await getDocs(subQuery);
-          const fetchedSubmissions: Submission[] = [];
-          subSnapshot.forEach(doc => fetchedSubmissions.push(doc.data() as Submission));
-          
-          // Sort client-side and get the 10 most recent
-          fetchedSubmissions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          const recentSubmissions = fetchedSubmissions.slice(0, 10);
-          setSubmissions(recentSubmissions);
+        // Fetch all submissions for the teacher's quizzes
+        const allSubmissionsQuery = query(
+          collection(db, "submissions"), 
+          where("teacherId", "==", user.uid)
+        );
+        const allSubmissionsSnapshot = await getDocs(allSubmissionsQuery);
+        const allFetchedSubmissions: Submission[] = [];
+        allSubmissionsSnapshot.forEach(doc => allFetchedSubmissions.push(doc.data() as Submission));
 
-          // Calculate class performance based on all submissions for this teacher's quizzes
-          if (fetchedSubmissions.length > 0) {
-            let totalScore = 0;
-            let topStudent = { name: 'N/A', score: 0 };
-            let strugglingStudent = { name: 'N/A', score: 100 };
+        // Get recent submissions
+        const recentSubmissionsQuery = query(
+          collection(db, "submissions"), 
+          where("teacherId", "==", user.uid),
+          orderBy("date", "desc"),
+          limit(10)
+        );
+        const recentSubmissionsSnapshot = await getDocs(recentSubmissionsQuery);
+        const fetchedRecentSubmissions: Submission[] = [];
+        recentSubmissionsSnapshot.forEach(doc => fetchedRecentSubmissions.push(doc.data() as Submission));
+        setSubmissions(fetchedRecentSubmissions);
 
-            fetchedSubmissions.forEach(sub => {
-              totalScore += sub.score;
-              if (sub.score > topStudent.score) {
-                topStudent = { name: sub.studentName, score: sub.score };
-              }
-              if (sub.score < strugglingStudent.score) {
-                strugglingStudent = { name: sub.studentName, score: sub.score };
-              }
-            });
+        // Calculate class performance based on all submissions
+        if (allFetchedSubmissions.length > 0) {
+          let totalScore = 0;
+          let topStudent = { name: 'N/A', score: 0 };
+          let strugglingStudent = { name: 'N/A', score: 100 };
 
-            setClassPerformance({
-              averageScore: Math.round(totalScore / fetchedSubmissions.length),
-              topStudent: topStudent.name !== 'N/A' ? topStudent : { name: 'N/A', score: 0 },
-              strugglingStudent: strugglingStudent.name !== 'N/A' ? strugglingStudent : { name: 'N/A', score: 0 }
-            });
-          }
+          allFetchedSubmissions.forEach(sub => {
+            totalScore += sub.score;
+            if (sub.score > topStudent.score) {
+              topStudent = { name: sub.studentName, score: sub.score };
+            }
+            if (sub.score < strugglingStudent.score) {
+              strugglingStudent = { name: sub.studentName, score: sub.score };
+            }
+          });
+
+          setClassPerformance({
+            averageScore: Math.round(totalScore / allFetchedSubmissions.length),
+            topStudent: topStudent.name !== 'N/A' ? topStudent : { name: 'N/A', score: 0 },
+            strugglingStudent: strugglingStudent.name !== 'N/A' ? strugglingStudent : { name: 'N/A', score: 0 }
+          });
         }
       } catch (error) {
         console.error("Error fetching teacher dashboard data:", error);
@@ -188,9 +191,9 @@ export default function TeacherDashboardPage() {
                     </div>
                   </TableCell>
                   <TableCell>{sub.quizTitle}</TableCell>
-                  <TableCell>{formatDistanceToNow(new Date(sub.date), { addSuffix: true })}</TableCell>
+                  <TableCell>{new Date(sub.date).toLocaleString()}</TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={sub.score >= 70 ? 'default' : 'destructive'} className={sub.score >= 70 ? 'bg-green-600' : ''}>
+                    <Badge variant={sub.score >= 70 ? 'default' : 'destructive'}>
                       {sub.score}%
                     </Badge>
                   </TableCell>

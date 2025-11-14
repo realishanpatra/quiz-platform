@@ -33,6 +33,7 @@ export type Submission = {
   studentName: string;
   quizId: string;
   quizTitle: string;
+  teacherId: string; // UID of the teacher who created the quiz
   score: number;
   date: string; // ISO 8601 string
   answers: (number | null)[];

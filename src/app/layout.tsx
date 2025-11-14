@@ -6,7 +6,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { FirebaseErrorListener } from '@/components/firebase/firebase-error-listener';
 
 export const metadata: Metadata = {
-  title: 'QuizVerse',
+  title: 'PICTIAP',
   description: 'The universe of quizzes for modern learning.',
 };
 
